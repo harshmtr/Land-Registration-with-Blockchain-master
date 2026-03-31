@@ -2,7 +2,18 @@
 
 const path = require('path');
 const fs = require('fs');
-const getPublicUrlOrPath = require('react-dev-utils/getPublicUrlOrPath');
+
+// Local implementation of getPublicUrlOrPath to avoid react-dev-utils compatibility issues
+const getPublicUrlOrPath = (isDevelopment, homepage, publicUrl) => {
+  const publicUrlOrPath = publicUrl || homepage || '/';
+  
+  if (isDevelopment) {
+    return publicUrlOrPath.startsWith('.') ? publicUrlOrPath.slice(1) : '/' + publicUrlOrPath.split('/').filter(Boolean).join('/') + '/';
+  }
+  
+  // In production, we return the public URL as-is
+  return publicUrlOrPath.endsWith('/') ? publicUrlOrPath : publicUrlOrPath + '/';
+};
 
 // Make sure any symlinks in the project folder are resolved:
 // https://github.com/facebook/create-react-app/issues/637
@@ -15,7 +26,7 @@ const resolveApp = relativePath => path.resolve(appDirectory, relativePath);
 // single-page apps that may serve index.html for nested URLs like /todos/42.
 // We can't use a relative path in HTML because we don't want to load something
 // like /todos/42/static/js/bundle.7289d.js. We have to know the root.
-const publicUrlOrPath = getPublicUrlOrPath(
+const publicUrlOrPathResult = getPublicUrlOrPath(
   process.env.NODE_ENV === 'development',
   require(resolveApp('package.json')).homepage,
   process.env.PUBLIC_URL
@@ -67,7 +78,7 @@ module.exports = {
   proxySetup: resolveApp('src/setupProxy.js'),
   appNodeModules: resolveApp('node_modules'),
   swSrc: resolveModule(resolveApp, 'src/service-worker'),
-  publicUrlOrPath,
+  publicUrlOrPath: publicUrlOrPathResult,
 };
 
 
