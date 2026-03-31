@@ -27,35 +27,93 @@ export default class Login extends Component {
         }
 
         try {
-            //Get network provider and web3 instance
+            console.log('=== Login componentDidMount ===');
+            
+            // Step 1: Get Web3 instance
+            console.log('Step 1: Getting Web3 instance...');
             const web3 = await getWeb3();
+            console.log('✓ Web3 obtained');
 
+            // Step 2: Get accounts using the correct Web3 method
+            console.log('Step 2: Getting accounts...');
             const accounts = await web3.eth.getAccounts();
+            console.log('✓ Accounts:', accounts);
+            
+            if (!accounts || accounts.length === 0) {
+                throw new Error('No accounts found. Please ensure MetaMask is connected and account is imported.');
+            }
+            
+            // Step 3: Use first account (CORRECT WAY - NOT web3.currentProvider.selectedAddress)
+            const currentAddress = accounts[0];
+            console.log('✓ Current address:', currentAddress);
 
+            // Step 4: Get network ID and contract instance
+            console.log('Step 3: Getting network and contract...');
             const networkId = await web3.eth.net.getId();
+            console.log('✓ Network ID:', networkId);
+            
             const deployedNetwork = LandContract.networks[networkId];
+            if (!deployedNetwork) {
+                throw new Error(`Contract not deployed on network ${networkId}`);
+            }
+            
             const instance = new web3.eth.Contract(
                 LandContract.abi,
-                deployedNetwork && deployedNetwork.address,
+                deployedNetwork.address,
             );
+            console.log('✓ Contract instance created');
 
-            const currentAddress = await web3.currentProvider.selectedAddress;
-            this.setState({ LandInstance: instance, web3: web3, account: accounts[0] });
-            var seller = await this.state.LandInstance.methods.isSeller(currentAddress).call();
-            console.log(seller);
-            this.setState({ seller: seller });
-            var buyer = await this.state.LandInstance.methods.isBuyer(currentAddress).call();
-            console.log(buyer);
-            this.setState({ buyer: buyer });
-            var landInspector = await this.state.LandInstance.methods.isLandInspector(currentAddress).call();
-            console.log(landInspector);
-            this.setState({ landInspector: landInspector });
+            // Step 5: Set initial state with Web3 and account
+            this.setState({ LandInstance: instance, web3: web3, account: currentAddress });
+            console.log('✓ State updated with Web3 instance');
+
+            // Step 6: Check user roles (isSeller, isBuyer, isLandInspector)
+            console.log('Step 4: Checking user roles...');
+            
+            try {
+                const seller = await instance.methods.isSeller(currentAddress).call();
+                console.log('✓ Is Seller?', seller);
+                this.setState({ seller: seller });
+            } catch (err) {
+                console.warn('Error checking seller status:', err.message);
+                this.setState({ seller: false });
+            }
+            
+            try {
+                const buyer = await instance.methods.isBuyer(currentAddress).call();
+                console.log('✓ Is Buyer?', buyer);
+                this.setState({ buyer: buyer });
+            } catch (err) {
+                console.warn('Error checking buyer status:', err.message);
+                this.setState({ buyer: false });
+            }
+            
+            try {
+                const landInspector = await instance.methods.isLandInspector(currentAddress).call();
+                console.log('✓ Is Land Inspector?', landInspector);
+                this.setState({ landInspector: landInspector });
+            } catch (err) {
+                console.warn('Error checking land inspector status:', err.message);
+                this.setState({ landInspector: false });
+            }
+            
+            console.log('=== Login componentDidMount completed ===');
 
         } catch (error) {
+            console.error('=== ERROR in Login componentDidMount ===');
+            console.error('Error message:', error.message);
+            console.error('Full error:', error);
+            
             alert(
-                `Failed to load web3, accounts, or contract. Check console for details.`,
+                `Failed to load web3, accounts, or contract.\n\n` +
+                `Error: ${error.message}\n\n` +
+                `Please check:\n` +
+                `1. Ganache is running on http://127.0.0.1:7545\n` +
+                `2. MetaMask is connected to Ganache\n` +
+                `3. Account is imported in MetaMask\n` +
+                `4. Contracts are deployed\n\n` +
+                `Check browser console (F12) for details.`
             );
-            console.error(error);
         }
     };
 
