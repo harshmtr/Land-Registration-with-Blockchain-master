@@ -1,0 +1,24 @@
+{
+  "name": "land-registration-blockchain",
+  "version": "1.0.0",
+  "description": "Land Registration with Blockchain using Truffle and React",
+  "scripts": {
+    "start": "cd client && npm start",
+    "start:install": "cd client && npm install --force && npm start",
+    "build": "cd client && npm build",
+    "test": "truffle test",
+    "compile": "truffle compile",
+    "migrate": "truffle migrate",
+    "migrate:reset": "truffle migrate --reset",
+    "install:dependencies": "npm install && cd client && npm install --force"
+  },
+  "keywords": [
+    "blockchain",
+    "land-registration",
+    "ethereum",
+    "truffle",
+    "react"
+  ],
+  "author": "",
+  "license": "MIT"
+}
